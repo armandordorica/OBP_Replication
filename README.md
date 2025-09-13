@@ -1,5 +1,4 @@
 # OBP_Replication
-# OBP_Replication
 
 Lightweight repo to replicate the **Open Bandit Dataset & Pipeline (OBD/OBP)** paper and then extend toward multi‑session credit assignment (per my qual proposal).
 
