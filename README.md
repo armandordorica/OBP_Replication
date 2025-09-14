@@ -7,7 +7,17 @@ Lightweight repo to replicate the **Open Bandit Dataset & Pipeline (OBD/OBP)** p
 ## Research Journal
 
 ### 2025‑09‑13
-**Goal:** Stand up a clean, reproducible environment and smoke‑test `obp`.
+
+* Understand that it was only a 7 day horizon
+* I encoded the hash from the features into more readable categories, i.e. `user_feature_{1,2,..}_category_{A,B,C}`
+* Cardinality is low for user features and there are only 4. 
+* As expected, propensity is the most important feature in predicted clickthrough rate (that's literally what it means as it's the baseline probability)
+* A lot of the categories within the user features only have 0 or 1 click so the data is very sparse and confidence intervals very wide. 
+
+
+### To do Next 
+* Compute correlations for each feature with target variable 
+* Compute AUC, F1, etc of random forest and try to get a sense of how this compares vs the OBP pipeline and articulate why one is better than the other. 
 
 **What I did**
 - Created repo `OBP_Replication`.
@@ -72,10 +82,78 @@ results/
 logs/
 ```
 
+
 **Why this matters**
 - Having a locked env is prerequisite for reproducing OBP tables (RMSE/REE) and comparing against on‑policy ground truth.
 
+**Progress update (same day)**
+- ✅ Successfully imported `obp` after resolving the seaborn/matplotlib version clash.
+- ✅ Loaded the **small-sized OBD sample** via:
+  ```bash
+  python - <<'PY'
+  from obp.dataset import OpenBanditDataset
+  d = OpenBanditDataset(behavior_policy="random", campaign="all")
+  bf = d.obtain_batch_bandit_feedback()
+  print("Keys:", sorted(bf.keys()))
+  for k in ["n_rounds","action","position","reward","pscore"]:
+      v = bf.get(k)
+      print(k, getattr(v, "shape", type(v)))
+  PY
+  ```
+  Output matched expectations:
+  ```
+  Keys: ['action', 'action_context', 'context', 'n_actions', 'n_rounds', 'position', 'pscore', 'reward']
+  n_rounds <class 'int'>
+  action (10000,)
+  position (10000,)
+  reward (10000,)
+  pscore (10000,)
+  ```
+- ✅ Saved environment snapshot:
+  ```bash
+  pip freeze > requirements.txt
+  ```
+
+**Note on dataset size**
+- When `data_path` is **omitted**, `OpenBanditDataset` downloads a small demo split (~10k rounds) for quick tests.
+- To use the **full logs**, download the campaign/policy CSVs and pass a local folder via `data_path=...`, e.g.:
+  ```python
+  d = OpenBanditDataset(
+      behavior_policy="random",
+      campaign="all",
+      data_path="/path/to/obd_full"  # folder containing extracted OBD CSVs
+  )
+  ```
+
 ---
+
+### 2025‑09‑14
+**Goal:** Explore dataset schema, understand feature structure, and replicate basic OPE.  
+
+**What I did**  
+- Downloaded full `zr-obp` repo (with Git LFS) and accessed raw CSVs (`log.csv`, `context.csv`, `item_context.csv`).  
+- Loaded log data into Pandas, explored schema (columns: `timestamp`, `item_id`, `position`, `click`, `propensity_score`, hashed `user_feature_*`, `user-item-affinity_*`).  
+- Verified ~26M rows are from a **7-day A/B test** across 3 campaigns (“All”, “Men’s”, “Women’s”) with Random vs BTS policies.  
+- Created readable versions of categorical hashes:  
+  - Renamed `user_feature_*` values as `A0, B1, C2, …` for interpretability.  
+- Analyzed cardinality of each user feature → found surprisingly low unique values (3–9).  
+- Visualized **CTR per category**:  
+  - Barplots per feature value (alphabetical order).  
+  - Error bar plots with Wilson confidence intervals.  
+  - Gridded charts with shared y-axis scales for comparability.  
+  - Blue vs gray coloring depending on minimum click counts (≥5 vs <5).  
+- Computed **pairwise joint CTR heatmaps** (e.g. `user_feature_1 × user_feature_2`).  
+- Built a one-hot encoded feature matrix (`X`) + target (`y`).  
+- Fit a **Random Forest**:  
+  - Baseline AUC ≈ [fill in].  
+  - Found that `propensity_score` dominated importance → concluded it should be dropped as it leaks logging policy information.  
+  - Next step: refit RF without `propensity_score` to see which features drive clicks.  
+
+**Why this matters**  
+- Confirmed that the raw logs expose the structure OBP estimators rely on (pscore, actions, rewards).  
+- Early CTR plots show heterogeneity across hashed user features → suggests real signal to capture.  
+- Random Forest sanity check shows that metadata can leak, so careful feature selection is critical before moving to sequence / credit-assignment experiments.  
+
 
 ## How to Reproduce My Env
 
