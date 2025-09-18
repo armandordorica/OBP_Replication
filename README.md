@@ -2,6 +2,28 @@
 
 Lightweight repo to replicate the **Open Bandit Dataset & Pipeline (OBD/OBP)** paper and then extend toward multi‑session credit assignment (per my qual proposal).
 
+
+### Sample import of a random behavior policy using OpenBanditDataset
+
+
+```python 
+# pick a campaign + behavior policy
+d = OpenBanditDataset(behavior_policy="random", campaign="all")
+bf = d.obtain_batch_bandit_feedback()
+
+# Start with scalar arrays (1D)
+df = pd.DataFrame({
+    "round_id": range(bf["n_rounds"]),
+    "action": bf["action"],       # which item was chosen
+    "position": bf["position"],   # slot index (0,1,2)
+    "reward": bf["reward"],       # click (0/1)
+    "pscore": bf["pscore"],       # logging policy prob
+})
+
+df.head()
+```
+
+
 ---
 
 ## Research Journal
