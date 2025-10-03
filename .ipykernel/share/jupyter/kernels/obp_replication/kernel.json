@@ -1,0 +1,14 @@
+{
+ "argv": [
+  "/Users/aordorica/opt/anaconda3/envs/obp_replication/bin/python",
+  "-m",
+  "ipykernel_launcher",
+  "-f",
+  "{connection_file}"
+ ],
+ "display_name": "Python (obp_replication)",
+ "language": "python",
+ "metadata": {
+  "debugger": true
+ }
+}
