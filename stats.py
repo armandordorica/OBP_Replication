@@ -7,6 +7,7 @@ and statistical summaries from bandit log data.
 
 import pandas as pd
 import numpy as np
+from itertools import product
 
 
 def compute_item_feature_distribution(df, item_id, feature_col, item_col='item_id'):
@@ -224,3 +225,128 @@ def compute_propensity_variance(df, groupby_col):
     variance = group_means.var()
     
     return variance
+
+
+def compute_feature_combinations(df, feature_cols, verbose=True):
+    """
+    Compute unique values for each feature column and calculate total possible combinations.
+    
+    This function analyzes categorical feature columns to determine:
+    1. The unique values present in each feature column
+    2. The total number of possible feature combinations (Cartesian product)
+    
+    Parameters:
+    -----------
+    df : pd.DataFrame
+        The dataframe containing the feature columns
+    feature_cols : list of str
+        List of feature column names to analyze (e.g., ['user_feature_0', 'user_feature_1'])
+    verbose : bool, optional
+        Whether to print detailed output (default: True)
+    
+    Returns:
+    --------
+    tuple: (unique_values, total_combinations)
+        - unique_values: dict mapping column names to sorted lists of unique values
+        - total_combinations: int representing the total number of possible combinations
+    
+    Example:
+    --------
+    >>> feature_cols = ['user_feature_0', 'user_feature_1', 'user_feature_2', 'user_feature_3']
+    >>> unique_vals, total_combos = compute_feature_combinations(log_df, feature_cols)
+    >>> print(f"Total possible combinations: {total_combos:,}")
+    """
+    # Get unique values for each feature
+    unique_values = {}
+    for col in feature_cols:
+        unique_values[col] = sorted(df[col].dropna().unique())
+    
+    if verbose:
+        print("Unique values per feature:")
+        for col, vals in unique_values.items():
+            print(f"  {col}: {vals} (n={len(vals)})")
+    
+    # Calculate total possible combinations (product of all cardinalities)
+    total_combinations = 1
+    for col, vals in unique_values.items():
+        total_combinations *= len(vals)
+    
+    if verbose:
+        print(f"\nTotal possible feature combinations: {total_combinations:,}")
+    
+    return unique_values, total_combinations
+
+
+def find_missing_combinations(df, feature_cols, item_id, item_col='item_id', verbose=False):
+    """
+    Find feature combinations that are missing (not present) in the dataset for a specific item.
+    
+    This function determines which combinations of feature values do not appear in the data
+    for the specified item_id. It's useful for understanding data sparsity and coverage gaps.
+    
+    Parameters:
+    -----------
+    df : pd.DataFrame
+        The dataframe containing the bandit log data
+    feature_cols : list of str
+        List of column names to analyze for combinations
+    item_id : int or str
+        The item ID to filter for
+    item_col : str, optional
+        The name of the item column (default: 'item_id')
+    verbose : bool, optional
+        If True, prints summary statistics (default: False)
+    
+    Returns:
+    --------
+    pd.DataFrame
+        DataFrame containing all missing feature combinations, with one column per feature.
+        Empty if all combinations are present.
+    
+    Example:
+    --------
+    >>> feature_cols = ['user_feature_0', 'user_feature_1', 'position']
+    >>> missing_df = find_missing_combinations(log_df, feature_cols, item_id=0)
+    >>> print(f"Missing combinations for item 0: {len(missing_df)}")
+    """
+    # Filter for the specific item
+    item_df = df[df[item_col] == item_id]
+    
+    if verbose:
+        print(f"Analyzing item_id={item_id}")
+        print(f"Total records for this item: {len(item_df)}")
+    
+    # Get unique values for each feature
+    unique_values = {}
+    for col in feature_cols:
+        unique_values[col] = sorted(df[col].dropna().unique())
+    
+    # Generate all possible combinations
+    all_combinations = list(product(*[unique_values[col] for col in feature_cols]))
+    total_possible = len(all_combinations)
+    
+    if verbose:
+        print(f"Total possible combinations: {total_possible:,}")
+    
+    # Get existing combinations for this item
+    existing_combinations = set(
+        tuple(row) for row in item_df[feature_cols].drop_duplicates().values
+    )
+    
+    if verbose:
+        print(f"Existing combinations for item {item_id}: {len(existing_combinations)}")
+    
+    # Find missing combinations
+    missing_combinations = [
+        combo for combo in all_combinations 
+        if combo not in existing_combinations
+    ]
+    
+    # Convert to DataFrame
+    missing_df = pd.DataFrame(missing_combinations, columns=feature_cols)
+    
+    if verbose:
+        print(f"Missing combinations: {len(missing_df)}")
+        print(f"Coverage: {len(existing_combinations)/total_possible*100:.2f}%")
+    
+    return missing_df
