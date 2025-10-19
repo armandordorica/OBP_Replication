@@ -205,3 +205,99 @@ def plot_distribution_with_cdf(data, column_name, title=None, height=500, width=
     print(f"{'='*60}\n")
     
     return fig
+
+
+def plot_histogram_with_stats(data, column_name, stats_dict, title=None, 
+                               xlabel=None, height=500, width=None, nbins=50):
+    """
+    Plot a histogram with vertical lines and annotations for statistical markers.
+    
+    Parameters:
+    -----------
+    data : pd.DataFrame
+        The dataframe containing the data to plot
+    column_name : str
+        Name of the column to plot as histogram
+    stats_dict : dict
+        Dictionary with statistics to mark on the plot (e.g., {'mean': 0.5, 'p50': 0.4, ...})
+    title : str, optional
+        Chart title
+    xlabel : str, optional
+        X-axis label (defaults to column_name)
+    height : int, optional
+        Chart height in pixels (default: 500)
+    width : int, optional
+        Chart width in pixels
+    nbins : int, optional
+        Number of histogram bins (default: 50)
+    
+    Returns:
+    --------
+    fig : plotly.graph_objs.Figure
+        The generated figure with histogram and statistical markers
+    """
+    # Set defaults
+    xlabel = xlabel or column_name
+    title = title or f'Distribution of {column_name} with Statistics'
+    
+    # Create histogram
+    fig = px.histogram(
+        data, 
+        x=column_name,
+        nbins=nbins,
+        title=title,
+        labels={column_name: xlabel},
+        height=height,
+        width=width
+    )
+    
+    # Define colors and positions for annotations
+    colors = {
+        'mean': 'red', 
+        'p25': 'green', 
+        'p50': 'blue', 
+        'p75': 'orange', 
+        'p99': 'purple'
+    }
+    
+    y_positions = {
+        'mean': 0.95, 
+        'p25': 0.85, 
+        'p50': 0.75, 
+        'p75': 0.65, 
+        'p99': 0.55
+    }
+    
+    # Add vertical lines and annotations for each statistic
+    for i, (stat, value) in enumerate(stats_dict.items()):
+        # Get color (use default if not in predefined colors)
+        color = colors.get(stat, 'gray')
+        y_pos = y_positions.get(stat, 0.5)
+        
+        # Add vertical line
+        fig.add_vline(
+            x=value, 
+            line_dash="dash", 
+            line_color=color,
+            line_width=2
+        )
+        
+        # Add annotation with staggered positioning
+        fig.add_annotation(
+            x=value,
+            y=y_pos,
+            yref='paper',
+            text=f"{stat}: {value:.6f}",
+            showarrow=True,
+            arrowhead=2,
+            arrowsize=1,
+            arrowwidth=2,
+            arrowcolor=color,
+            ax=30 if i % 2 == 0 else -30,
+            ay=-30,
+            bgcolor="white",
+            bordercolor=color,
+            borderwidth=1
+        )
+    
+    return fig
