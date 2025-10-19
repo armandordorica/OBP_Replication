@@ -301,3 +301,95 @@ def plot_histogram_with_stats(data, column_name, stats_dict, title=None,
         )
     
     return fig
+
+
+def plot_boxplot_with_stats(plot_df, stats_df, value_col, groupby_col_str, 
+                             title=None, xlabel=None, ylabel=None, height=600,
+                             show_mean_overlay=True):
+    """
+    Create a boxplot with optional mean overlay and statistics in hover.
+    
+    Parameters:
+    -----------
+    plot_df : pd.DataFrame
+        DataFrame with the data (including string version of groupby column)
+    stats_df : pd.DataFrame
+        DataFrame with statistics (mean, p25, p50, p75, p99) per group
+    value_col : str
+        Column name containing the values to plot
+    groupby_col_str : str
+        String column name to group by (for x-axis)
+    title : str, optional
+        Plot title
+    xlabel : str, optional
+        X-axis label
+    ylabel : str, optional
+        Y-axis label
+    height : int, optional
+        Plot height in pixels
+    show_mean_overlay : bool, optional
+        Whether to show red dots for mean values
+    
+    Returns:
+    --------
+    fig : plotly.graph_objs.Figure
+        The plotly figure object
+    """
+    # Create boxplot
+    fig = px.box(
+        plot_df,
+        x=groupby_col_str,
+        y=value_col,
+        title=title or f'Distribution of {value_col} by {groupby_col_str}',
+        labels={
+            groupby_col_str: xlabel or groupby_col_str.replace('_str', '').replace('_', ' ').title(),
+            value_col: ylabel or value_col.replace('_', ' ').title()
+        },
+        height=height
+    )
+    
+    # Add scatter trace for mean values if requested
+    if show_mean_overlay:
+        fig.add_scatter(
+            x=stats_df[groupby_col_str],
+            y=stats_df['mean'],
+            mode='markers',
+            marker=dict(color='red', size=8, symbol='circle'),
+            name='Mean',
+            customdata=stats_df[['p25', 'p50', 'p75', 'p99']],
+            hovertemplate=f'<b>{xlabel or groupby_col_str}: %{{x}}</b><br>' +
+                          'Mean: %{y:.4f}<br>' +
+                          'p25: %{customdata[0]:.4f}<br>' +
+                          'p50: %{customdata[1]:.4f}<br>' +
+                          'p75: %{customdata[2]:.4f}<br>' +
+                          'p99: %{customdata[3]:.4f}<br>' +
+                          '<extra></extra>'
+        )
+    
+    # Customize the layout
+    fig.update_layout(
+        xaxis={
+            'title': xlabel or groupby_col_str.replace('_str', '').replace('_', ' ').title(),
+            'type': 'category',
+            'categoryorder': 'category ascending'
+        },
+        yaxis={
+            'title': ylabel or value_col.replace('_', ' ').title()
+        },
+        showlegend=show_mean_overlay,
+        hovermode='closest'
+    )
+    
+    # Update hover template for boxplot
+    fig.update_traces(
+        selector=dict(type='box'),
+        hovertemplate=f'<b>{xlabel or groupby_col_str}: %{{x}}</b><br>' +
+                      f'{ylabel or value_col}: %{{y:.4f}}<br>' +
+                      '<extra></extra>'
+    )
+    
+    # Add gridlines for better readability
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgray')
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgray')
+    
+    return fig
