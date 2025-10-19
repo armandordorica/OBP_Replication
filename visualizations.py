@@ -71,6 +71,8 @@ def plot_bar_chart(data, x_col, y_col, x_title=None, y_title=None, title=None,
             text_template = '%{text:.2f}'
         elif ':.4f' in value_format:
             text_template = '%{text:.4f}'
+        elif ':.6f' in value_format:
+            text_template = '%{text:.6f}'
         else:
             text_template = '%{text}'
             
