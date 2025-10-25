@@ -1,3 +1,51 @@
 
 # local installers
 Miniconda3.sh
+
+# CSV files (especially large dataset files)
+*.csv
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# DuckDB database files
+*.duckdb
+*.duckdb.wal
+
+# Results and output directories
+results/
+outputs/
+
+# macOS files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Large model files
+*.pkl
+*.pickle
+*.h5
+*.hdf5
+*.pt
+*.pth
+*.onnx
