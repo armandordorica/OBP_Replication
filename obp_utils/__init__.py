@@ -26,6 +26,12 @@ from .data_loader import (
     load_all_policies
 )
 
+from .formatter import (
+    comma_separator,
+    format_thousands,
+    remap_user_features
+)
+
 __version__ = "1.0.0"
 __author__ = "Armando Ordorica"
 
@@ -36,6 +42,10 @@ __all__ = [
     'get_dataset_stats',
     'load_all_campaigns',
     'load_all_policies',
+    # Formatter functions
+    'comma_separator',
+    'format_thousands',
+    'remap_user_features',
     # Module names (import as: from obp_utils import correlation)
     'data_loader',
     'correlation',
