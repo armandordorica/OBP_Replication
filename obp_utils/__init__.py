@@ -32,6 +32,12 @@ from .formatter import (
     remap_user_features
 )
 
+from .correlation import (
+    get_user_feature_correlations,
+    compute_multiple_pairwise_corr,
+    get_correlation_df
+)
+
 __version__ = "1.0.0"
 __author__ = "Armando Ordorica"
 
@@ -46,6 +52,10 @@ __all__ = [
     'comma_separator',
     'format_thousands',
     'remap_user_features',
+    # Correlation functions
+    'get_user_feature_correlations',
+    'compute_multiple_pairwise_corr',
+    'get_correlation_df',
     # Module names (import as: from obp_utils import correlation)
     'data_loader',
     'correlation',
